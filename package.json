@@ -1,0 +1,78 @@
+// src/functions/history.js
+//
+// GET    /api/history                      -> all history points (optionally ?supplierId=&metricKey=)
+// GET    /api/history/{id}                 -> one history point
+// POST   /api/history                      -> create a history point
+// PUT    /api/history/{id}                  -> update a history point
+// DELETE /api/history/{id}                  -> delete a history point
+//
+// This feeds the KPI trend charts and the supplier comparison tool. Points
+// are usually created alongside a Meeting (when a meeting's KpiSnapshot
+// includes a metric), but can also be added independently for KPIs reported
+// outside of a meeting context (e.g. a monthly EDI feed).
+
+const { app } = require('@azure/functions');
+const { getAllListItems, getListItem, createListItem, updateListItem, deleteListItem } = require('../lib/graphClient');
+const { historyFromSP, historyToSP } = require('../lib/mappers');
+const { ok, created, noContent, badRequest, notFound, serverError, preflight } = require('../lib/http');
+
+const LIST = () => process.env.HISTORY_LIST_NAME || 'PerformanceHistory';
+
+app.http('history', {
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  authLevel: 'anonymous',
+  route: 'history/{id?}',
+  handler: async (request, context) => {
+    if (request.method === 'OPTIONS') return preflight();
+
+    const id = request.params.id;
+    const supplierId = request.query.get('supplierId');
+    const metricKey = request.query.get('metricKey');
+
+    try {
+      if (request.method === 'GET') {
+        if (id) {
+          const item = await getListItem(LIST(), id);
+          if (!item) return notFound('History record not found');
+          return ok(historyFromSP(item));
+        }
+        let items = await getAllListItems(LIST());
+        let records = items.map(historyFromSP);
+        if (supplierId) records = records.filter((r) => String(r.sid) === String(supplierId));
+        if (metricKey) records = records.filter((r) => r.metricKey === metricKey);
+        records.sort((a, b) => new Date(a.date) - new Date(b.date));
+        return ok(records);
+      }
+
+      if (request.method === 'POST') {
+        const body = await request.json();
+        if (!body || body.sid == null || !body.metricKey || body.value == null || !body.date) {
+          return badRequest('Fields "sid", "metricKey", "date" and "value" are required.');
+        }
+        const fields = historyToSP(body);
+        const item = await createListItem(LIST(), fields);
+        return created(historyFromSP(item));
+      }
+
+      if (request.method === 'PUT') {
+        if (!id) return badRequest('History id is required in the URL for updates.');
+        const body = await request.json();
+        const fields = historyToSP(body);
+        await updateListItem(LIST(), id, fields);
+        const item = await getListItem(LIST(), id);
+        return ok(historyFromSP(item));
+      }
+
+      if (request.method === 'DELETE') {
+        if (!id) return badRequest('History id is required in the URL for deletion.');
+        await deleteListItem(LIST(), id);
+        return noContent();
+      }
+
+      return badRequest('Unsupported method');
+    } catch (err) {
+      context.error('history function error', err);
+      return serverError(err);
+    }
+  },
+});

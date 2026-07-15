@@ -1,0 +1,138 @@
+// src/functions/actions.js
+//
+// GET    /api/actions                         -> all actions (optionally ?supplierId=&status=)
+// GET    /api/actions/{id}                    -> one action
+// POST   /api/actions                         -> create an action
+// PUT    /api/actions/{id}                     -> update an action (status, owner, due date, notes...)
+// DELETE /api/actions/{id}                     -> delete an action
+// POST   /api/actions/materialize              -> scan Meetings' ActionItemsRaw text and create any
+//                                                  Actions rows that don't already exist for that
+//                                                  supplier (matched case-insensitively by title).
+//                                                  Idempotent: safe to call repeatedly.
+
+const { app } = require('@azure/functions');
+const { getAllListItems, getListItem, createListItem, updateListItem, deleteListItem } = require('../lib/graphClient');
+const { actionFromSP, actionToSP, meetingFromSP } = require('../lib/mappers');
+const { ok, created, noContent, badRequest, notFound, serverError, preflight } = require('../lib/http');
+
+const ACTIONS_LIST = () => process.env.ACTIONS_LIST_NAME || 'Actions';
+const MEETINGS_LIST = () => process.env.MEETINGS_LIST_NAME || 'Meetings';
+
+function actionTextsFor(meeting) {
+  return (meeting.act || '')
+    .split('\n')
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+app.http('actions', {
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  authLevel: 'anonymous',
+  route: 'actions/{id?}',
+  handler: async (request, context) => {
+    if (request.method === 'OPTIONS') return preflight();
+
+    const id = request.params.id;
+    const supplierId = request.query.get('supplierId');
+    const status = request.query.get('status');
+
+    try {
+      if (request.method === 'GET') {
+        if (id) {
+          const item = await getListItem(ACTIONS_LIST(), id);
+          if (!item) return notFound('Action not found');
+          return ok(actionFromSP(item));
+        }
+        let items = await getAllListItems(ACTIONS_LIST());
+        let records = items.map(actionFromSP);
+        if (supplierId) records = records.filter((r) => String(r.sid) === String(supplierId));
+        if (status) records = records.filter((r) => r.status === status);
+        return ok(records);
+      }
+
+      if (request.method === 'POST') {
+        const body = await request.json();
+        if (!body || body.sid == null || !body.type) {
+          return badRequest('Fields "sid" (supplier id) and "type" (description) are required.');
+        }
+        const fields = actionToSP(body);
+        const item = await createListItem(ACTIONS_LIST(), fields);
+        return created(actionFromSP(item));
+      }
+
+      if (request.method === 'PUT') {
+        if (!id) return badRequest('Action id is required in the URL for updates.');
+        const body = await request.json();
+        const fields = actionToSP(body);
+        await updateListItem(ACTIONS_LIST(), id, fields);
+        const item = await getListItem(ACTIONS_LIST(), id);
+        return ok(actionFromSP(item));
+      }
+
+      if (request.method === 'DELETE') {
+        if (!id) return badRequest('Action id is required in the URL for deletion.');
+        await deleteListItem(ACTIONS_LIST(), id);
+        return noContent();
+      }
+
+      return badRequest('Unsupported method');
+    } catch (err) {
+      context.error('actions function error', err);
+      return serverError(err);
+    }
+  },
+});
+
+app.http('actionsMaterialize', {
+  methods: ['POST', 'OPTIONS'],
+  authLevel: 'anonymous',
+  route: 'actions/materialize',
+  handler: async (request, context) => {
+    if (request.method === 'OPTIONS') return preflight();
+
+    try {
+      const [meetingItems, actionItems] = await Promise.all([
+        getAllListItems(MEETINGS_LIST()),
+        getAllListItems(ACTIONS_LIST()),
+      ]);
+      const meetings = meetingItems.map(meetingFromSP);
+      const existingActions = actionItems.map(actionFromSP);
+
+      const existingKeySet = new Set(
+        existingActions.map((a) => `${a.sid}::${(a.type || '').trim().toLowerCase()}`)
+      );
+
+      const toCreate = [];
+      meetings.forEach((m) => {
+        actionTextsFor(m).forEach((text) => {
+          const key = `${m.sid}::${text.toLowerCase()}`;
+          if (!existingKeySet.has(key)) {
+            existingKeySet.add(key);
+            toCreate.push({
+              sid: m.sid,
+              type: text,
+              severity: 'Medium',
+              status: 'Open',
+              owner: '',
+              due: '',
+              notes: '',
+              sourceMeetingId: m.id,
+            });
+          }
+        });
+      });
+
+      const created_ = [];
+      for (const action of toCreate) {
+        const fields = actionToSP(action);
+        const item = await createListItem(ACTIONS_LIST(), fields);
+        created_.push(actionFromSP(item));
+      }
+
+      return ok({ createdCount: created_.length, created: created_ });
+    } catch (err) {
+      context.error('actionsMaterialize function error', err);
+      return serverError(err);
+    }
+  },
+});

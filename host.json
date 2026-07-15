@@ -1,0 +1,75 @@
+// src/functions/kpis.js
+//
+// GET    /api/kpis                       -> all KPI records (optionally ?supplierId=)
+// GET    /api/kpis/{id}                  -> one KPI record
+// POST   /api/kpis                       -> create/upsert a KPI record
+// PUT    /api/kpis/{id}                  -> update a KPI record
+// DELETE /api/kpis/{id}                  -> delete a KPI record
+//
+// The frontend mostly wants these grouped by supplier (KPIS[supplierId][metricKey]),
+// which /api/kpis?grouped=1 returns directly to save it a reshaping step.
+
+const { app } = require('@azure/functions');
+const { getAllListItems, getListItem, createListItem, updateListItem, deleteListItem } = require('../lib/graphClient');
+const { kpiFromSP, kpiToSP, groupKpisBySupplier } = require('../lib/mappers');
+const { ok, created, noContent, badRequest, notFound, serverError, preflight } = require('../lib/http');
+
+const LIST = () => process.env.KPI_LIST_NAME || 'KPIRecords';
+
+app.http('kpis', {
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  authLevel: 'anonymous',
+  route: 'kpis/{id?}',
+  handler: async (request, context) => {
+    if (request.method === 'OPTIONS') return preflight();
+
+    const id = request.params.id;
+    const supplierId = request.query.get('supplierId');
+    const grouped = request.query.get('grouped');
+
+    try {
+      if (request.method === 'GET') {
+        if (id) {
+          const item = await getListItem(LIST(), id);
+          if (!item) return notFound('KPI record not found');
+          return ok(kpiFromSP(item));
+        }
+        let items = await getAllListItems(LIST());
+        let records = items.map(kpiFromSP);
+        if (supplierId) records = records.filter((r) => String(r.supplierId) === String(supplierId));
+        if (grouped) return ok(groupKpisBySupplier(records));
+        return ok(records);
+      }
+
+      if (request.method === 'POST') {
+        const body = await request.json();
+        if (!body || body.supplierId == null || !body.metricKey) {
+          return badRequest('Fields "supplierId" and "metricKey" are required.');
+        }
+        const fields = kpiToSP(body);
+        const item = await createListItem(LIST(), fields);
+        return created(kpiFromSP(item));
+      }
+
+      if (request.method === 'PUT') {
+        if (!id) return badRequest('KPI record id is required in the URL for updates.');
+        const body = await request.json();
+        const fields = kpiToSP(body);
+        await updateListItem(LIST(), id, fields);
+        const item = await getListItem(LIST(), id);
+        return ok(kpiFromSP(item));
+      }
+
+      if (request.method === 'DELETE') {
+        if (!id) return badRequest('KPI record id is required in the URL for deletion.');
+        await deleteListItem(LIST(), id);
+        return noContent();
+      }
+
+      return badRequest('Unsupported method');
+    } catch (err) {
+      context.error('kpis function error', err);
+      return serverError(err);
+    }
+  },
+});

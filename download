@@ -1,0 +1,65 @@
+// src/functions/dashboard.js
+//
+// GET /api/dashboard
+//
+// Convenience aggregate endpoint: fetches Suppliers, KPIRecords (grouped),
+// Meetings, Actions, and PerformanceHistory in parallel and returns them as
+// one payload. This is what the frontend calls on initial page load and on
+// each auto-refresh tick, instead of firing five separate requests — fewer
+// round trips, and the frontend can treat "the dashboard's data" as a single
+// atomic snapshot rather than reconciling five independently-arriving
+// responses that might reflect slightly different moments in time.
+
+const { app } = require('@azure/functions');
+const { getAllListItems } = require('../lib/graphClient');
+const {
+  supplierFromSP,
+  kpiFromSP, groupKpisBySupplier,
+  meetingFromSP,
+  actionFromSP,
+  historyFromSP,
+} = require('../lib/mappers');
+const { ok, serverError, preflight } = require('../lib/http');
+
+const SUPPLIERS_LIST = () => process.env.SUPPLIERS_LIST_NAME || 'Suppliers';
+const KPI_LIST = () => process.env.KPI_LIST_NAME || 'KPIRecords';
+const MEETINGS_LIST = () => process.env.MEETINGS_LIST_NAME || 'Meetings';
+const ACTIONS_LIST = () => process.env.ACTIONS_LIST_NAME || 'Actions';
+const HISTORY_LIST = () => process.env.HISTORY_LIST_NAME || 'PerformanceHistory';
+
+app.http('dashboard', {
+  methods: ['GET', 'OPTIONS'],
+  authLevel: 'anonymous',
+  route: 'dashboard',
+  handler: async (request, context) => {
+    if (request.method === 'OPTIONS') return preflight();
+
+    try {
+      const [supplierItems, kpiItems, meetingItems, actionItems, historyItems] = await Promise.all([
+        getAllListItems(SUPPLIERS_LIST()),
+        getAllListItems(KPI_LIST()),
+        getAllListItems(MEETINGS_LIST()),
+        getAllListItems(ACTIONS_LIST()),
+        getAllListItems(HISTORY_LIST()),
+      ]);
+
+      const suppliers = supplierItems.map(supplierFromSP);
+      const kpiRecords = kpiItems.map(kpiFromSP);
+      const meetings = meetingItems.map(meetingFromSP).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const actions = actionItems.map(actionFromSP);
+      const history = historyItems.map(historyFromSP).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      return ok({
+        fetchedAt: new Date().toISOString(),
+        suppliers,
+        kpis: groupKpisBySupplier(kpiRecords),
+        meetings,
+        actions,
+        history,
+      });
+    } catch (err) {
+      context.error('dashboard function error', err);
+      return serverError(err);
+    }
+  },
+});
