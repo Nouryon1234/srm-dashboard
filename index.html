@@ -1759,6 +1759,7 @@ function back(){
   requestAnimationFrame(()=>window.scrollTo(0,scrollY));
 }
 function renderProfCard(){
+  if(!curS)return;
   const s=curS,risk=riskOf(s),seg=segOf(s);
   const typeL=s.type==='ff'?'🚚 Freight Forwarder / Logistics':'🚢 Ocean Carrier';
   const mi=(lbl,val)=>`<span class="pm-item"><span class="pm-lbl">${lbl}</span>${val}</span>`;
@@ -1875,6 +1876,7 @@ function renderFrameworkChartGrid(title,list,sid,keyPrefix){
   </div>`;
 }
 function renderPKpi(){
+  if(!curS)return;
   const s=curS;
   const metricKeys=Object.keys(METRICS_META).filter(k=>allMetricKeysFor(s.id).includes(k));
   const mod=modOf(s);
@@ -1950,6 +1952,7 @@ const SI={positive:'✅',neutral:'➡️',concern:'⚠️',escalation:'🚨'};
 // list (no calendar grid) — upcoming meetings first (soonest next), then past meetings
 // most-recent-first.
 function renderPCal(){
+  if(!curS)return;
   const s=curS,notes=NS[s.id]||[];
   const nowD=new Date();nowD.setHours(0,0,0,0);
   const past=notes.filter(n=>new Date(n.date+'T00:00:00')<=nowD).sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -2360,6 +2363,7 @@ function openNModal(){
   document.getElementById('nact').value='';
   document.getElementById('natt-list').innerHTML='';
   const upNotice=document.getElementById('upload-notice');if(upNotice)upNotice.style.display='none';
+  delete document.getElementById('nmod').dataset.forceSupPicker;
   if(curS){
     document.getElementById('n-sup-wrap').style.display='none';
   }else{
@@ -2385,12 +2389,14 @@ function editNote(sid,noteId){
   const notice=document.getElementById('upload-notice');if(notice)notice.style.display='none';
   (n.files||[]).forEach(f=>addAttRow(f.name,f.url,f.isUpload));
   document.getElementById('nmod').dataset.sid=sid;
+  delete document.getElementById('nmod').dataset.forceSupPicker;
   document.getElementById('nmod').classList.add('open');
 }
 function closeNModal(){document.getElementById('nmod').classList.remove('open');}
 function saveNote(){
   const editId=document.getElementById('n-edit-id').value;
-  const sid=editId?+document.getElementById('nmod').dataset.sid:(curS?curS.id:+document.getElementById('n-sup').value);
+  const forceSupPicker=document.getElementById('nmod').dataset.forceSupPicker==='1';
+  const sid=editId?+document.getElementById('nmod').dataset.sid:((curS&&!forceSupPicker)?curS.id:+document.getElementById('n-sup').value);
   const atts=[...document.querySelectorAll('#natt-list .att-row')].map(r=>({
     name:r.querySelector('.att-name').value.trim(),
     url:r.querySelector('.att-url').value.trim(),
@@ -2417,7 +2423,15 @@ function saveNote(){
 }
 
 function openNModalWithDate(dateStr){
+  // Always force the supplier picker here — this is invoked from the global Calendar tab,
+  // where there is no "current" supplier context. Reusing openNModal()'s curS check caused
+  // meetings logged from the calendar to silently attach to whatever supplier profile had
+  // last been viewed, instead of the supplier actually picked for this date.
+  const savedCurS=curS;
+  curS=null;
   openNModal();
+  curS=savedCurS;
+  document.getElementById('nmod').dataset.forceSupPicker='1';
   document.getElementById('nd').value=dateStr;
 }
 function deleteNote(sid,noteId){
