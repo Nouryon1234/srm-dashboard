@@ -3666,6 +3666,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
 
     let html = '';
+let resultCount = 0;
 
     // Suppliers
     S.forEach(s => {
@@ -3675,7 +3676,9 @@ document.addEventListener('DOMContentLoaded',()=>{
             .toLowerCase()
             .includes(query)
         ) {
-
+          
+resultCount++;
+          
             html += `
                 <div
                     style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
@@ -3700,7 +3703,9 @@ document.addEventListener('DOMContentLoaded',()=>{
                 .toLowerCase()
                 .includes(query)
             ) {
-
+              
+resultCount++;
+              
                 html += `
                     <div
                         style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
@@ -3729,7 +3734,9 @@ document.addEventListener('DOMContentLoaded',()=>{
                 .toLowerCase()
                 .includes(query)
             ) {
-
+              
+resultCount++;
+              
                 html += `
                     <div
                         style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
@@ -3749,8 +3756,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     });
 
-    box.innerHTML =
-        html || '<div>No results found</div>';
+   box.innerHTML = resultCount
+    ? `
+        <div style="
+            padding:8px;
+            font-size:12px;
+            font-weight:700;
+            color:#64748b;
+            border-bottom:2px solid #eee;
+            margin-bottom:6px;">
+            ${resultCount} Results Found
+        </div>
+
+        ${html}
+      `
+    : '<div style="padding:8px">No results found</div>';
 
     box.style.display = 'block';
 }
