@@ -3681,8 +3681,8 @@ document.addEventListener('DOMContentLoaded',()=>{
                     style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
                     onclick="openProfile(${s.id})">
 
-                    <b>📋 Supplier</b><br>
-                    ${s.n}
+                  <b style="color:#1A4780">📋 Supplier</b><br>
+<span style="font-weight:700;font-size:13px">${s.n}</span>
 
                 </div>
             `;
@@ -3706,8 +3706,10 @@ document.addEventListener('DOMContentLoaded',()=>{
                         style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
                         onclick="openProfile(${sid})">
 
-                        <b>📝 Meeting</b><br>
-                        ${m.type} (${m.date})
+                     <b style="color:#059669">📝 Meeting</b><br>
+<span style="font-weight:700">${m.type}</span>
+<br>
+<span style="font-size:11px;color:#64748b">${m.date}</span>
 
                     </div>
                 `;
@@ -3733,8 +3735,11 @@ document.addEventListener('DOMContentLoaded',()=>{
                         style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
                         onclick="openProfile(${sid})">
 
-                        <b>🎯 Action</b><br>
-                        ${a.type}
+                        <b style="color:#d97706">🎯 Action</b><br>
+
+<span style="font-weight:700;font-size:13px">
+    ${a.type}
+</span>
 
                     </div>
                 `;
