@@ -3649,6 +3649,31 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderOverviewCharts();renderMap();renderCmpList();renderCompare();
   document.querySelectorAll('.hn')[0].classList.add('on');
 });
+function openMeetingResult(sid, meetingId) {
+
+    openProfile(Number(sid));
+
+    setTimeout(() => {
+
+        swPTab('cal');
+
+        setTimeout(() => {
+
+            const meeting =
+                document.getElementById(`meeting-${meetingId}`);
+
+            if (meeting) {
+                meeting.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+
+        }, 300);
+
+    }, 300);
+}
+
   function runGlobalSearch() {
 
     const query =
@@ -3682,7 +3707,7 @@ resultCount++;
             html += `
                 <div
                     style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
-                    onclick="openProfile(${s.id})">
+                    onclick="openMeetingResult(${sid}, '${m.id}')"
 
                   <b style="color:#1A4780">📋 Supplier</b><br>
 <span style="font-weight:700;font-size:13px">${s.n}</span>
