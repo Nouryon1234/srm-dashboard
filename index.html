@@ -3240,7 +3240,7 @@ function renderCalGridView(container){
   const allRows=rows.slice();
 const upcoming=allRows.filter(r=>new Date(r.date+'T00:00:00')>=nowD).sort((a,b)=>new Date(a.date)-new Date(b.date));
 const past=allRows.filter(r=>new Date(r.date+'T00:00:00')<nowD).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const sideItem=n=>`<div class="mtg-item ${new Date(n.date+'T00:00:00')<=nowD?'past':'upcoming'}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="openMeetingComments(${n.sid},'${n.id}')" title="Click to view/add comments for this meeting">
+  const sideItem=n=>`<div class="mtg-item ${new Date(n.date+'T00:00:00')<=nowD?'past':'upcoming'}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="selectCalDay('${n.date}')" title="Click to view comments for this meeting">
     <div style="min-width:0;flex:1">
       <div style="font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${esc(n.sname)}</div>
       <div style="font-size:10px;color:var(--mu)">${fmtD(n.date)} · ${esc(n.type)}</div>
