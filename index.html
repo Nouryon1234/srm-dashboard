@@ -644,7 +644,8 @@ color:#fff;flex-shrink:0}
     <h2 id="mtgc-title" style="margin-bottom:2px">💬 Meeting Comments</h2>
     <div id="mtgc-sub" style="font-size:11.5px;color:var(--mu);margin-bottom:2px"></div>
     <a href="#" id="mtgc-profile-link" style="font-size:11px;color:var(--nv2);text-decoration:none;display:inline-block;margin-bottom:10px">→ View Supplier Profile</a>
-    <div id="mtgc-banner" style="background:#f8fafc;border:1px solid var(--brd);border-radius:8px;padding:8px 10px;margin-bottom:12px"></div>
+    <div id="mtgc-banner" style="background:#f8fafc;border:1px solid var(--brd);border-radius:8px;padding:8px 10px;margin-bottom:12px"></div
+         <div id="mtgc-meeting-info"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--mu)">📋 Activity Log</span>
       <span id="mtgc-count" style="font-size:11px;color:var(--mu)"></span>
@@ -3053,7 +3054,37 @@ function openMeetingComments(sid,noteId){
   document.getElementById('mtgc-banner').innerHTML=isFuture
     ?`<div style="font-size:11px;color:${MU}">This meeting is upcoming — log discussion topics, preparation notes, and follow-up items ahead of it.</div>`
     :`<div style="font-size:11px;color:${MU}">This meeting has passed — log the summary, additional observations, outstanding actions, and any priority follow-ups.</div>`;
-  document.getElementById('mtgc-text').value='';
+document.getElementById('mtgc-meeting-info').innerHTML = `
+<div style="
+    background:#f8fafc;
+    border:1px solid #dbe4f0;
+    border-radius:10px;
+    padding:12px;
+    margin:12px 0">
+
+    <div style="font-weight:700;margin-bottom:8px">
+        Meeting Details
+    </div>
+
+    <div style="font-size:12px;margin-bottom:8px">
+        <b>Attendees:</b><br>
+        ${esc(n.att || 'Not specified')}
+    </div>
+
+    <div style="font-size:12px;margin-bottom:8px">
+        <b>Discussion:</b><br>
+        ${esc(n.dis || 'No discussion recorded')}
+    </div>
+
+    <div style="font-size:12px">
+        <b>Action Items:</b><br>
+        ${esc(n.act || 'No action items recorded')}
+    </div>
+
+</div>
+`;
+
+document.getElementById('mtgc-text').value='';
   renderMeetingCommentsList();
   document.getElementById('mtgCommentsModal').classList.add('open');
 }
