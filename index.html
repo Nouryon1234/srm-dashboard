@@ -3717,7 +3717,7 @@ resultCount++;
 <br>
 
 <span style="font-size:11px;font-weight:700;color:#1A4780">
-    ${S.find(x => x.id == sid)?.n || 'Unknown Supplier'}
+${(S.find(x => x.id == Number(sid)) || {}).n || 'Unknown Supplier'}
 </span>
 <br>
 
