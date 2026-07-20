@@ -251,9 +251,23 @@ color:#fff;flex-shrink:0}
     <button class="hn" onclick="goTab('calendar')">📅 Calendar</button>
   </div>
   <div class="hdr-right">
+
+    <div class="tbl-search" style="width:280px;background:white">
+        <span>🔍</span>
+        <input
+            type="text"
+            id="global-search"
+            placeholder="Search suppliers, meetings, actions..."
+            oninput="runGlobalSearch()">
+    </div>
+
     <div class="alert-b" id="alert-b"></div>
-    <div style="font-size:11px;color:rgba(255,255,255,.45)">Nouryon</div>
-  </div>
+
+    <div style="font-size:11px;color:rgba(255,255,255,.45)">
+        Nouryon
+    </div>
+
+</div>
 </div>
 
 <div class="wrap">
@@ -3636,5 +3650,25 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.hn')[0].classList.add('on');
 });
 </script>
+
+<div id="global-search-results"
+     style="
+        display:none;
+        position:fixed;
+        top:65px;
+        right:20px;
+        width:500px;
+        max-height:500px;
+        overflow-y:auto;
+        background:white;
+        border:1px solid #ddd;
+        border-radius:12px;
+        box-shadow:0 10px 30px rgba(0,0,0,.15);
+        z-index:99999;
+        padding:10px;">
+</div>
+
+</body>
+</html>
 </body>
 </html>
