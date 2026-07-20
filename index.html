@@ -3238,8 +3238,8 @@ function renderCalGridView(container){
 
   const nowD=new Date();nowD.setHours(0,0,0,0);
   const allRows=rows.slice();
-  const upcoming=allRows.filter(r=>new Date(r.date+'T00:00:00')>nowD).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,8);
-  const past=allRows.filter(r=>new Date(r.date+'T00:00:00')<=nowD).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+const upcoming=allRows.filter(r=>new Date(r.date+'T00:00:00')>=nowD).sort((a,b)=>new Date(a.date)-new Date(b.date));
+const past=allRows.filter(r=>new Date(r.date+'T00:00:00')<nowD).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const sideItem=n=>`<div class="mtg-item ${new Date(n.date+'T00:00:00')<=nowD?'past':'upcoming'}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="openMeetingComments(${n.sid},'${n.id}')" title="Click to view/add comments for this meeting">
     <div style="min-width:0;flex:1">
       <div style="font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${esc(n.sname)}</div>
@@ -3251,10 +3251,10 @@ function renderCalGridView(container){
       <button class="btn-s" style="padding:2px 7px;font-size:9.5px" onclick="deleteNote(${n.sid},'${n.id}')">🗑</button>
     </div>
   </div>`;
-  const sideList=`<div class="card cp">
+  const sideList=`<div class="card cp" style="max-height:800px;overflow-y:auto">
     <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--mu);letter-spacing:1px;margin-bottom:8px">🔜 Upcoming Meetings</div>
     ${upcoming.length?upcoming.map(sideItem).join(''):`<div style="font-size:11px;color:var(--mu);padding:4px 0">None scheduled</div>`}
-    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--mu);letter-spacing:1px;margin:16px 0 8px">🕒 Most Recent Past Meetings</div>
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--mu);letter-spacing:1px;margin:16px 0 8px">🕒 All Past Meetings</div>
     ${past.length?past.map(sideItem).join(''):`<div style="font-size:11px;color:var(--mu);padding:4px 0">None on file</div>`}
   </div>`;
 
