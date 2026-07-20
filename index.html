@@ -3649,6 +3649,124 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderOverviewCharts();renderMap();renderCmpList();renderCompare();
   document.querySelectorAll('.hn')[0].classList.add('on');
 });
+  function runGlobalSearch() {
+
+    const query =
+        document.getElementById('global-search')
+        .value
+        .toLowerCase()
+        .trim();
+
+    const box =
+        document.getElementById('global-search-results');
+
+    if (!query) {
+        box.style.display = 'none';
+        return;
+    }
+
+    let html = '';
+
+    // Suppliers
+    S.forEach(s => {
+
+        if (
+            JSON.stringify(s)
+            .toLowerCase()
+            .includes(query)
+        ) {
+
+            html += `
+                <div
+                    style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
+                    onclick="openProfile(${s.id})">
+
+                    <b>📋 Supplier</b><br>
+                    ${s.n}
+
+                </div>
+            `;
+        }
+
+    });
+
+    // Meetings
+    Object.entries(NS).forEach(([sid, meetings]) => {
+
+        meetings.forEach(m => {
+
+            if (
+                JSON.stringify(m)
+                .toLowerCase()
+                .includes(query)
+            ) {
+
+                html += `
+                    <div
+                        style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
+                        onclick="openProfile(${sid})">
+
+                        <b>📝 Meeting</b><br>
+                        ${m.type} (${m.date})
+
+                    </div>
+                `;
+            }
+
+        });
+
+    });
+
+    // Actions
+    Object.entries(ISSUES).forEach(([sid, actions]) => {
+
+        actions.forEach(a => {
+
+            if (
+                JSON.stringify(a)
+                .toLowerCase()
+                .includes(query)
+            ) {
+
+                html += `
+                    <div
+                        style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
+                        onclick="openProfile(${sid})">
+
+                        <b>🎯 Action</b><br>
+                        ${a.type}
+
+                    </div>
+                `;
+            }
+
+        });
+
+    });
+
+    box.innerHTML =
+        html || '<div>No results found</div>';
+
+    box.style.display = 'block';
+}
+
+document.addEventListener('click', function(e){
+
+    if(
+        !e.target.closest('#global-search') &&
+        !e.target.closest('#global-search-results')
+    ){
+
+        const box =
+            document.getElementById('global-search-results');
+
+        if(box){
+            box.style.display='none';
+        }
+
+    }
+
+});
 </script>
 
 <div id="global-search-results"
@@ -3668,7 +3786,5 @@ document.addEventListener('DOMContentLoaded',()=>{
         padding:10px;">
 </div>
 
-</body>
-</html>
 </body>
 </html>
