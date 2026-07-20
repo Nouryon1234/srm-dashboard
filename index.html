@@ -3707,7 +3707,7 @@ resultCount++;
             html += `
                 <div
                     style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
-                    onclick="openMeetingResult(${sid}, '${m.id}')"
+                  onclick="openProfile(${s.id})"
 
                   <b style="color:#1A4780">📋 Supplier</b><br>
 <span style="font-weight:700;font-size:13px">${s.n}</span>
@@ -3734,7 +3734,7 @@ resultCount++;
                 html += `
                     <div
                         style="padding:8px;border-bottom:1px solid #eee;cursor:pointer"
-                        onclick="openProfile(${sid})">
+                       onclick="openMeetingResult(${sid}, '${m.id}')"
 
                  <b style="color:#059669">📝 Meeting</b><br>
 
