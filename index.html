@@ -3054,7 +3054,9 @@ function openMeetingComments(sid,noteId){
   document.getElementById('mtgc-banner').innerHTML=isFuture
     ?`<div style="font-size:11px;color:${MU}">This meeting is upcoming — log discussion topics, preparation notes, and follow-up items ahead of it.</div>`
     :`<div style="font-size:11px;color:${MU}">This meeting has passed — log the summary, additional observations, outstanding actions, and any priority follow-ups.</div>`;
-document.getElementById('mtgc-meeting-info').innerHTML = `
+const meetingInfo=document.getElementById('mtgc-meeting-info');
+if(meetingInfo){
+    meetingInfo.innerHTML=`
 <div style="
     background:#f8fafc;
     border:1px solid #dbe4f0;
@@ -3083,6 +3085,8 @@ document.getElementById('mtgc-meeting-info').innerHTML = `
 
 </div>
 `;
+  
+}
 
 document.getElementById('mtgc-text').value='';
   renderMeetingCommentsList();
