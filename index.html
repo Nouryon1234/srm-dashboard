@@ -640,12 +640,11 @@ color:#fff;flex-shrink:0}
 
 <!-- CALENDAR MEETING COMMENTS MODAL (Enhancement 4) -->
 <div class="mov" id="mtgCommentsModal">
-<div class="modal" style="max-width:800px">
+  <div class="modal" style="max-width:520px">
     <h2 id="mtgc-title" style="margin-bottom:2px">💬 Meeting Comments</h2>
     <div id="mtgc-sub" style="font-size:11.5px;color:var(--mu);margin-bottom:2px"></div>
     <a href="#" id="mtgc-profile-link" style="font-size:11px;color:var(--nv2);text-decoration:none;display:inline-block;margin-bottom:10px">→ View Supplier Profile</a>
-    <div id="mtgc-banner" style="background:#f8fafc;border:1px solid var(--brd);border-radius:8px;padding:8px 10px;margin-bottom:12px"></div
-        <div id="mtgc-meeting-info" style="display:none;"></div>
+    <div id="mtgc-banner" style="background:#f8fafc;border:1px solid var(--brd);border-radius:8px;padding:8px 10px;margin-bottom:12px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--mu)">📋 Activity Log</span>
       <span id="mtgc-count" style="font-size:11px;color:var(--mu)"></span>
@@ -3054,41 +3053,7 @@ function openMeetingComments(sid,noteId){
   document.getElementById('mtgc-banner').innerHTML=isFuture
     ?`<div style="font-size:11px;color:${MU}">This meeting is upcoming — log discussion topics, preparation notes, and follow-up items ahead of it.</div>`
     :`<div style="font-size:11px;color:${MU}">This meeting has passed — log the summary, additional observations, outstanding actions, and any priority follow-ups.</div>`;
-const meetingInfo=document.getElementById('mtgc-meeting-info');
-if(meetingInfo){
-    meetingInfo.innerHTML=`
-<div style="
-    background:#f8fafc;
-    border:1px solid #dbe4f0;
-    border-radius:10px;
-    padding:12px;
-    margin:12px 0">
-
-    <div style="font-weight:700;margin-bottom:8px">
-        Meeting Details
-    </div>
-
-    <div style="font-size:12px;margin-bottom:8px">
-        <b>Attendees:</b><br>
-        ${esc(n.att || 'Not specified')}
-    </div>
-
-    <div style="font-size:12px;margin-bottom:8px">
-        <b>Discussion:</b><br>
-        ${esc(n.dis || 'No discussion recorded')}
-    </div>
-
-    <div style="font-size:12px">
-        <b>Action Items:</b><br>
-        ${esc(n.act || 'No action items recorded')}
-    </div>
-
-</div>
-`;
-  
-}
-
-document.getElementById('mtgc-text').value='';
+  document.getElementById('mtgc-text').value='';
   renderMeetingCommentsList();
   document.getElementById('mtgCommentsModal').classList.add('open');
 }
@@ -3263,7 +3228,10 @@ function renderCalGridView(container){
         <div style="font-size:10.5px;color:var(--mu);margin-top:2px">${n.creator?`Created by ${esc(n.creator)} · `:''}${esc((n.dis||'No notes.').slice(0,110))}${(n.dis||'').length>110?'…':''}</div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()">
+        <button class="btn-s" style="padding:3px 9px;font-size:10.5px" onclick="openProfile(${n.sid})">🏢</button>
         <button class="btn-s" style="padding:3px 9px;font-size:10.5px" onclick="openMeetingComments(${n.sid},'${n.id}')">💬 ${(CommentsStore.list(meetingCommentKey(n.sid,n.id))||[]).length||''}</button>
+        <button class="btn-s" style="padding:3px 9px;font-size:10.5px" onclick="editNote(${n.sid},'${n.id}')">✏️</button>
+        <button class="btn-s" style="padding:3px 9px;font-size:10.5px" onclick="deleteNote(${n.sid},'${n.id}')">🗑</button>
       </div>
     </div>`).join(''):`<div class="empty-state" style="padding:16px 10px"><span class="ico">🗓️</span>No meetings logged for this date yet — use the button above to add one.</div>`}
   </div>`:`<div class="card cp" style="margin-top:14px;color:var(--mu);text-align:center;padding:24px 10px"><span style="font-size:24px;display:block;margin-bottom:6px">📅</span>Click any date above to view its meetings or quickly log a new one.</div>`;
@@ -3272,12 +3240,15 @@ function renderCalGridView(container){
   const allRows=rows.slice();
 const upcoming=allRows.filter(r=>new Date(r.date+'T00:00:00')>=nowD).sort((a,b)=>new Date(a.date)-new Date(b.date));
 const past=allRows.filter(r=>new Date(r.date+'T00:00:00')<nowD).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const sideItem=n=>`<div class="mtg-item ${new Date(n.date+'T00:00:00')<=nowD?'past':'upcoming'}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="selectCalDay('${n.date}');openMeetingComments(${n.sid},'${n.id}')" title="Click to view this meeting">
+  const sideItem=n=>`<div class="mtg-item ${new Date(n.date+'T00:00:00')<=nowD?'past':'upcoming'}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="selectCalDay('${n.date}')" title="Click to view comments for this meeting">
     <div style="min-width:0;flex:1">
       <div style="font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📝 ${esc(n.sname)}</div>
       <div style="font-size:10px;color:var(--mu)">${fmtD(n.date)} · ${esc(n.type)}</div>
     </div>
     <div style="display:flex;gap:3px;flex-shrink:0" onclick="event.stopPropagation()">
+      <button class="btn-s" style="padding:2px 7px;font-size:9.5px" onclick="selectCalDay('${n.date}')" title="Jump to this date on the calendar">📅</button>
+      <button class="btn-s" style="padding:2px 7px;font-size:9.5px" onclick="editNote(${n.sid},'${n.id}')">✏️</button>
+      <button class="btn-s" style="padding:2px 7px;font-size:9.5px" onclick="deleteNote(${n.sid},'${n.id}')">🗑</button>
     </div>
   </div>`;
   const sideList=`<div class="card cp" style="max-height:800px;overflow-y:auto">
