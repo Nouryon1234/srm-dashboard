@@ -1466,6 +1466,8 @@ const NS={};S.forEach(s=>NS[s.id]=[]);
 
     const data = await response.json();
 
+console.log('SharePoint meetings loaded:', data.value.length);
+
     data.value.forEach(item => {
 
         const supplier = S.find(s =>
@@ -3679,17 +3681,27 @@ function deleteModalityUI(name){
   populateModalityDropdowns();
   renderModalityListUI();
 }
-document.addEventListener('DOMContentLoaded',()=>{
-  populateModalityDropdowns();
-  synthesizeKpiHistory();
-  materializeAllActions();
-  setupFilters();
-  state.tab='suppliers';
-  renderHeader();
-  renderSupplierTable();
-  // Overview widgets are pre-rendered too so they're instant when the user switches tabs.
-  renderOverviewCharts();renderMap();renderCmpList();renderCompare();
-  document.querySelectorAll('.hn')[0].classList.add('on');
+document.addEventListener('DOMContentLoaded', async ()=>{
+
+    await loadSharePointMeetings();
+
+    populateModalityDropdowns();
+    synthesizeKpiHistory();
+    materializeAllActions();
+    setupFilters();
+
+    state.tab='suppliers';
+
+    renderHeader();
+    renderSupplierTable();
+
+    renderOverviewCharts();
+    renderMap();
+    renderCmpList();
+    renderCompare();
+
+    document.querySelectorAll('.hn').forEach(...);
+
 });
 function openMeetingResult(sid, meetingId) {
 
