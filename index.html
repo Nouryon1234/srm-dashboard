@@ -1453,6 +1453,38 @@ const S=[
   {id:40,n:"Väte Rail",   ab:"VTR",type:"ff",sub:"Rail",                     region:"EMEIA",   country:"Sweden",        lead:"Not Assigned",         tier:"Preferred/Tier 2",   spend:0,   comm:["—","—","—"],focus:["—","—","—","—","—","—"],},
 ];
 const NS={};S.forEach(s=>NS[s.id]=[]);
+    async function loadSharePointMeetings() {
+
+    const response = await fetch(
+        "/sites/SC00023T12637/_api/web/lists/GetByTitle('SRM Dashboard Meetings')/items?$top=5000",
+        {
+            headers: {
+                Accept: "application/json;odata=nometadata"
+            }
+        }
+    );
+
+    const data = await response.json();
+
+    data.value.forEach(item => {
+
+        const supplier = S.find(s =>
+            s.n === item.SupplierName
+        );
+
+        if (!supplier) return;
+
+        NS[supplier.id].push({
+            id: item.Id,
+            date: item.MeetingDate,
+            type: item.MeetingType || '',
+            att: 'Not specified',
+            dis: item.SummaryText || '',
+            act: item.ActionItems || ''
+        });
+
+    });
+}
 // Supplier meeting records — one independent history entry & calendar event per meeting
 NS[15].push({id:20251022001,date:'2025-10-22',type:'Q3 2025 Business Review',att:'Not specified',
   dis:`KPIs — Dedicated OTD 99.34%, Dedicated OTL 98.46%, Bulk OTD 90%, Bulk OTP 88% (Below Target); Booking Confirmation, Rejection Reasons and Transit Time Deviations not reported. Financials — YTD shortfall of $11,861; April was the highest cost/kg month; significant savings opportunities identified through load optimization. Takeaway: dedicated business performing well, bulk transportation is the primary concern.`,
